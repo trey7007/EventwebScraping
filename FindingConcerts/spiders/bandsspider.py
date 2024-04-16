@@ -33,7 +33,9 @@ class BandsspiderSpider(scrapy.Spider):
     def parse_genre(self, response):
         bands = response.css('div.AtIvjk2YjzXSULT1cmVx')
         genre = response.css('a.DEtdg_ebWp1WssEkz7Dh')
-        #for band in bands:
+        # while testing, we will just check for a couple of bands. Not all.
+        # To get full scrapy, use this instead
+        # for band in bands:
         for i in range(3):
             band = bands[i]
             details_page_url = band.css('a.HsqHp2xM2FkfSdjy1mlU ::attr(href)').get()
