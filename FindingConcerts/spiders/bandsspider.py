@@ -8,13 +8,6 @@ class BandsspiderSpider(scrapy.Spider):
     allowed_domains = ["bandsintown.com"]
     start_urls = ["https://www.bandsintown.com/?city_id=5261457"]
 
-    ##AVOID GETTING BLOCKED
-    CONCURRENT_REQUESTS_PER_DOMAIN = 1
-
-    AUTOTHROTTLE_ENABLED = True
-    DOWNLOAD_DELAY = 30
-    
-
 
     # def __init__(self):
     #     self.results = []
@@ -44,7 +37,7 @@ class BandsspiderSpider(scrapy.Spider):
                 'genre' : genre.css('span._xT1T7soLIel8_WGwaWX::text').get(),
                 'name' : band.css('div._5CQoAbgUFZI3p33kRVk::text').get(),
                 'location' : band.css('div.bqB5zhZmpkzqQcKohzfB::text').get(),
-                'date' : band.css('div.r593Wuo4miYix9siDdTP').get(),
+                'date' : band.xpath('//div[@class="r593Wuo4miYix9siDdTP"]/div/text()').get(),
             }
 
             yield response.follow(details_page_url, callback=self.parse_details_page, cb_kwargs=band_deets)
