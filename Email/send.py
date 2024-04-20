@@ -12,12 +12,12 @@ EMAIL_PASSWORD = os.environ.get('EMAIL_PASS')
 
 contacts = ['treyvincent@hotmail.com']
 
+with open('./Email/emailcontents.html','r') as msgfile:
+    msgtxt = msgfile.read()
+
 msg = EmailMessage()
 msg['Subject'] = 'Upcoming events, Madison!'
 msg['From'] = EMAIL_ADDRESS
-
-msgtxt = open('emailcontents.txt','r').read()
-
 msg.set_content(msgtxt, subtype='html')
 
 with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
