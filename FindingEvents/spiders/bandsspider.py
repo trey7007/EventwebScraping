@@ -1,5 +1,6 @@
 import scrapy
 from scrapy import Request
+from FindingEvents.items import EventItem
 
 
 class BandsspiderSpider(scrapy.Spider):
@@ -8,6 +9,11 @@ class BandsspiderSpider(scrapy.Spider):
     allowed_domains = ["bandsintown.com"]
     start_urls = ["https://www.bandsintown.com/?city_id=5261457"]
 
+    # custom_settings = {
+    #     'FEEDS': {
+    #         'banddata.json' : {'format': 'json', 'overwrite': True}
+    #     }
+    # }
 
     # def __init__(self):
     #     self.results = []
@@ -45,13 +51,16 @@ class BandsspiderSpider(scrapy.Spider):
     
     def parse_details_page(self, response, genre, name, location, date ):
 
-        yield {
-        'city' : response.xpath('//div[@class="e6YFaVBz8eqoPeVSqavc"]/div/div/a/text()').get(),
-        'name' : name,
-        'location' : location,
-        'date' : date,
-        'genre' : genre
-        }
+        band_item = EventItem()
+
+        band_item['event'] = "Concert"
+        band_item['city'] = response.xpath('//div[@class="e6YFaVBz8eqoPeVSqavc"]/div/div/a/text()').get(),
+        band_item['name'] = name,
+        band_item['location'] = location,
+        band_item['datetime'] = date,
+        band_item['genre'] = genre
+        
+        yield band_item
 
         ### To continue between pages
         # next_page = response.css('li.next a ::attr(href)').get()
