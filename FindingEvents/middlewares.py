@@ -5,6 +5,10 @@
 
 from scrapy import signals
 
+from scrapy.exceptions import CloseSpider
+from scrapy.downloadermiddlewares.retry import RetryMiddleware
+import time
+
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
 
@@ -101,3 +105,28 @@ class FindingEventsDownloaderMiddleware:
 
     def spider_opened(self, spider):
         spider.logger.info("Spider opened: %s" % spider.name)
+
+class CustomRetryMiddleware(RetryMiddleware):
+    def process_response(self, request, response, spider):
+        if response.status in self.retry_http_codes:
+            reason = self._status_to_reason(response.status)
+            retries = request.meta.get('retry_times', 0) + 1
+            max_retry_times = self.max_retry_times
+
+            if retries <= max_retry_times:
+                spider.logger.warning(f"Retrying {request} (failed {retries} times): {reason}\n\n\n")
+                time.sleep(300)  # Delay for 5 minutes before retrying
+                return self._retry(request, reason, spider) or response
+            else:
+                spider.logger.error(f"Giving up on {request} (failed {retries} times): {reason}")
+                raise CloseSpider(f"Reached maximum retry times ({max_retry_times}) for {request}")
+
+        return response
+
+    def _status_to_reason(self, status):
+        # Define status code to reason mapping
+        reason_map = {
+            403: "HTTP 403 Forbidden",
+            # Add more status codes and reasons as needed
+        }
+        return reason_map.get(status, f"HTTP {status}")

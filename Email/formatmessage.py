@@ -35,14 +35,14 @@ class formatMessage:
 
         my_templ = Template(html_text)
         
-        with open('../Email/emailcontents.html', 'w') as f:
+        with open('./Email/emailcontents.html', 'w') as f:
             f.write(my_templ.render(events=events))
 
 
 
 msg = formatMessage()
 
-with open("../FilteringEvents/filteredevents.json","r") as json_data:
+with open("./FilteringEvents/filteredevents.json","r") as json_data:
     parsed_json = json.load(json_data)
 
 

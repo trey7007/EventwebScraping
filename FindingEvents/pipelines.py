@@ -7,6 +7,7 @@
 # useful for handling different item types with a single interface
 from itemadapter import ItemAdapter
 import sqlite3
+from datetime import datetime
 
 
 class FindingConcertsPipeline:
@@ -25,19 +26,25 @@ class FindingConcertsPipeline:
 
 
         ## Split up the Date and Time
-        datetime = adapter.get("datetime")
+        datetimesplit = adapter.get("datetime")
         
-        date = ""
         time = ""
 
-        for i in range(len(datetime)):
-            if datetime[i] == "-":
-                date = datetime[:i-1]
-                time = datetime[i+2:]
+        for i in range(len(datetimesplit)):
+            if datetimesplit[i] == "-":
+                time = datetimesplit[i+2:]
                 break
 
-        adapter["date"] = date
         adapter["time"] = time
+        
+
+        ## Format Date to actual SQL date
+
+        date = adapter.get("date")
+
+        date_fomatted = datetime.strptime(date, '%b %d, %Y')
+
+        adapter["date"] = date_fomatted
         
         return item
 
@@ -59,34 +66,42 @@ class SaveEventsToSQLPipeline:
                     city TEXT,
                     name TEXT,
                     location TEXT,
-                    date TEXT,
+                    date DATE,
                     time TEXT,
-                    genre TEXT                
+                    genre TEXT,
+                    PRIMARY KEY (name, date)            
                 )
             """)
 
     def close_spider(self,spider):
         self.cur.close()
-        self.conn.close()
+        self.con.close()
 
  
     def process_item(self, item, spider):
 
-       ## Insert Data into database
-
         self.cur.execute("""
-                INSERT INTO events (event, city, name, location, date, time , genre) VALUES (?, ?, ?, ?, ?, ?, ?)  
-            """,
-            (
-                item['event'],
-                item['city'],
-                item['name'],
-                item['location'],
-                item['date'],
-                item['time'],
-                item['genre']
-            ))
+            SELECT COUNT(*) FROM events WHERE name = ? AND time = ?
+        """, (item['name'], item['time']))
 
-        self.con.commit()
+        # Fetch the result
+        result = self.cur.fetchone()
+
+        # If no record exists with the same [name, time], insert the data into the table
+        if result[0] == 0:
+            self.cur.execute("""
+                    INSERT INTO events (event, city, name, location, date, time , genre) VALUES (?, ?, ?, ?, ?, ?, ?)  
+                """,
+                (
+                    item['event'],
+                    item['city'],
+                    item['name'],
+                    item['location'],
+                    item['date'],
+                    item['time'],
+                    item['genre']
+                ))
+
+            self.con.commit()
         return item
        

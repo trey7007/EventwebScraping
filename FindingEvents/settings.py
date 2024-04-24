@@ -12,12 +12,23 @@ BOT_NAME = "FindingEvents"
 SPIDER_MODULES = ["FindingEvents.spiders"]
 NEWSPIDER_MODULE = "FindingEvents.spiders"
 
+
+
+FAKEUSERAGENT_PROVIDERS = [
+    'scrapy_fake_useragent.providers.FakeUserAgentProvider',  # This is the first provider we'll try
+    'scrapy_fake_useragent.providers.FakerProvider',  # If FakeUserAgentProvider fails, we'll use faker to generate a user-agent string for us
+    'scrapy_fake_useragent.providers.FixedUserAgentProvider',  # Fall back to USER_AGENT value
+]
+
+## Set Fallback User-Agent
+USER_AGENT = 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'
+
+
 # FEEDS = {
 #     'banddata.json' : {'format': 'json'}
 # }
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = "FindingConcerts (+http://www.yourdomain.com)"
-
+CLOSESPIDER_ERRORCOUNT = 10
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
 
@@ -27,13 +38,16 @@ ROBOTSTXT_OBEY = True
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-DOWNLOAD_DELAY = 1
+# DOWNLOAD_DELAY = 300
+RETRY_HTTP_CODES = [403]
+RETRY_ENABLED = True
+RETRY_TIMES = 3
 # The download delay setting will honor only one of:
 CONCURRENT_REQUESTS_PER_DOMAIN = 8
 # CONCURRENT_REQUESTS_PER_IP = 1
 
 # Disable cookies (enabled by default)
-#COOKIES_ENABLED = False
+COOKIES_ENABLED = False
 
 # Disable Telnet Console (enabled by default)
 #TELNETCONSOLE_ENABLED = False
@@ -52,9 +66,16 @@ CONCURRENT_REQUESTS_PER_DOMAIN = 8
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
-#    "FindingConcerts.middlewares.FindingconcertsDownloaderMiddleware": 543,
-#}
+## settings.py
+DOWNLOADER_MIDDLEWARES = {
+    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+    'scrapy.downloadermiddlewares.retry.RetryMiddleware': None,
+    'scrapy_fake_useragent.middleware.RandomUserAgentMiddleware': 400,
+    'scrapy_fake_useragent.middleware.RetryUserAgentMiddleware': 401,
+    'FindingEvents.middlewares.CustomRetryMiddleware': 543,
+
+}
+
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
@@ -64,7 +85,7 @@ CONCURRENT_REQUESTS_PER_DOMAIN = 8
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-
+# The lower the number, the sooner it will go
 ITEM_PIPELINES = {
     "FindingEvents.pipelines.FindingConcertsPipeline": 300,
     "FindingEvents.pipelines.SaveEventsToSQLPipeline": 400,
